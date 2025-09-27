@@ -1,0 +1,115 @@
+.container {
+  min-width: 600px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.header {
+  margin-bottom: 3rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: black;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #666;
+}
+
+.signin-form {
+  background: white;
+  border: 2px solid black;
+  padding: 2rem;
+  margin-bottom: 3rem;
+}
+
+.signin-form h2 {
+  color: black;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: black;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid black;
+  font-size: 1rem;
+  background: white;
+  color: black;
+}
+
+.input:focus {
+  outline: 2px solid black;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid black;
+  background: black;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+}
+
+.btn:hover {
+  background: white;
+  color: black;
+}
+
+.toggle-mode {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.toggle-mode p {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: black;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.btn-link:hover {
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+    min-width: auto;
+  }
+}
