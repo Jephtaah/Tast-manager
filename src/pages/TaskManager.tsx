@@ -9,9 +9,8 @@ interface Task {
   created_at: string;
 }
 
-
-export  function TaskManager() {
-const [newTask, setNewTask] = useState({ title: "", description: "" });
+export function TaskManager() {
+  const [newTask, setNewTask] = useState({ title: "", description: "" });
   const [tasks, setTasks] = useState<Task[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
@@ -80,7 +79,10 @@ const [newTask, setNewTask] = useState({ title: "", description: "" });
     formRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-
+  const logOut = async () => {
+    await supabase.auth.signOut();
+    window.location.reload();
+  };
 
   return (
     <div className="container" ref={formRef}>
@@ -89,64 +91,82 @@ const [newTask, setNewTask] = useState({ title: "", description: "" });
         <p className="subtitle">Organize your work and stay productive</p>
       </header>
 
-      <form className="task-form" onSubmit={handleAddTask}>
-        <h2>{editingId ? "Edit Task" : "Create New Task"}</h2>
-        <div className="form-group">
-          <label htmlFor="title">Task Title</label>
-          <input
-            id="title"
-            type="text"
-            placeholder="Enter task title..."
-            value={newTask.title}
-            onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-            className="input"
-          />
+      <div className="task-manager">
+        <form className="task-form" onSubmit={handleAddTask}>
+          <h2>{editingId ? "Edit Task" : "Create New Task"}</h2>
+          <div className="form-group">
+            <label htmlFor="title">Task Title</label>
+            <input
+              id="title"
+              type="text"
+              placeholder="Enter task title..."
+              value={newTask.title}
+              onChange={(e) =>
+                setNewTask({ ...newTask, title: e.target.value })
+              }
+              className="input"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="description">Description</label>
+            <textarea
+              id="description"
+              placeholder="Describe your task..."
+              value={newTask.description}
+              onChange={(e) =>
+                setNewTask({ ...newTask, description: e.target.value })
+              }
+              className="textarea"
+            />
+          </div>
+          <button className="btn btn-primary" type="submit">
+            {editingId ? "Edit Task" : "Add Task"}
+          </button>
+        </form>
+
+        <div className="tasks-section">
+          <div className="section-header">
+            <h2>Your Tasks</h2>
+            <span className="task-count">{tasks.length} tasks</span>
+          </div>
+
+          <div className="tasks-grid">
+            {tasks.map((task) => (
+              <div key={task.id} className="task-card">
+                <div className="task-header">
+                  <div className="status-indicator pending"></div>
+                  <span className="task-date">
+                    {new Date(task.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+
+                <div className="task-content">
+                  <h3 className="task-title">{task.title}</h3>
+                  <p className="task-description">{task.description}</p>
+                </div>
+
+                <div className="task-actions">
+                  <button
+                    className="btn-action btn-edit"
+                    onClick={() => editTask(task)}
+                  >
+                    ✎
+                  </button>
+                  <button
+                    className="btn-action btn-delete"
+                    onClick={() => deleteTask(task.id)}
+                  >
+                    🗑
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="form-group">
-          <label htmlFor="description">Description</label>
-          <textarea
-            id="description"
-            placeholder="Describe your task..."
-            value={newTask.description}
-            onChange={(e) =>
-              setNewTask({ ...newTask, description: e.target.value })
-            }
-            className="textarea"
-          />
-        </div>
-        <button className="btn btn-primary" type="submit">
-          {editingId ? "Edit Task" : "Add Task"}
+
+        <button className="btn btn-primary" onClick={logOut}>
+          Logout
         </button>
-      </form>
-
-      <div className="tasks-section">
-        <div className="section-header">
-          <h2>Your Tasks</h2>
-          <span className="task-count">{tasks.length} tasks</span>
-        </div>
-
-        <div className="tasks-grid">
-          {tasks.map((task) => (
-            <div key={task.id} className="task-card">
-              <div className="task-header">
-                <div className="status-indicator pending"></div>
-                <span className="task-date">
-                  {new Date(task.created_at).toLocaleDateString()}
-                </span>
-              </div>
-
-              <div className="task-content">
-                <h3 className="task-title">{task.title}</h3>
-                <p className="task-description">{task.description}</p>
-              </div>
-
-              <div className="task-actions">
-                <button className="btn-action btn-edit" onClick={() => editTask(task)}>✎</button>
-                <button className="btn-action btn-delete" onClick={() => deleteTask(task.id)}>🗑</button>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

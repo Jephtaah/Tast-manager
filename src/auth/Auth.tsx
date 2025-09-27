@@ -1,9 +1,8 @@
-import React, { useState, FormEvent } from 'react';
-import './SignIn.css';
+import { useState, type FormEvent } from 'react';
+import './Auth.css';
 import { supabase } from '../supabase-client';
 
-
-const Auth: React.FC = () => {
+export function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,6 +14,8 @@ const Auth: React.FC = () => {
     } else {
       await supabase.auth.signInWithPassword({ email, password });
     }
+
+    window.location.reload();
   }
 
   return (
@@ -24,7 +25,7 @@ const Auth: React.FC = () => {
         <p className="subtitle">{isSignUp ? "Welcome! Please sign up to your account." : "Welcome back! Please sign in to your account."}</p>
       </div>
 
-      <div className="signin-form">
+      <div className="auth-form">
         <h2>Enter your credentials</h2>
 
         <div className="form-group">
@@ -72,6 +73,5 @@ const Auth: React.FC = () => {
       </div>
     </form>
   );
-};
+}
 
-export default SignIn;
