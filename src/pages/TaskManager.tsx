@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { supabase } from "../supabase-client";
+import type { Session } from "@supabase/supabase-js";
 import "./TaskManager.css";
 
 interface Task {
@@ -7,13 +8,24 @@ interface Task {
   title: string;
   description: string;
   created_at: string;
+  email: string;
+  image_url: string;
 }
 
 export function TaskManager() {
-  const [newTask, setNewTask] = useState({ title: "", description: "" });
+  const [newTask, setNewTask] = useState({ title: "", description: "", email: "" });
   const [tasks, setTasks] = useState<Task[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
+
+  const [taskImage, setTaskImage] = useState<File | null>(null);
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setTaskImage(e.target.files[0]);
+    }
+  }
 
   const fetchTasks = async () => {
     const { error, data } = await supabase
@@ -31,17 +43,51 @@ export function TaskManager() {
 
   useEffect(() => {
     fetchTasks();
+
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+    };
+
+    getSession();
   }, []);
 
-  console.log(tasks);
+  
+
+  const uploadImage = async (image: File): Promise<string | null> => {
+    const filePath = `${image.name}-${Date.now()}`;
+    const { error } = await supabase.storage.from("task-images").upload(filePath, image);
+
+    if (error) {
+      console.log("Error uploading image");
+      return null;
+    }
+
+    const { data } = supabase.storage.from("task-images").getPublicUrl(filePath);
+
+    return data.publicUrl;
+  }
+
+
+
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    let imageUrl: string | null = null;
+    if (taskImage) {
+      imageUrl = await uploadImage(taskImage);
+    }
+
+    if (!session?.user) {
+      console.error("User not authenticated");
+      return;
+    }
+
     if (editingId) {
       const { error } = await supabase
         .from("tasks")
-        .update(newTask)
+        .update({ title: newTask.title, description: newTask.description, image_url: imageUrl })
         .eq("id", editingId);
 
       if (error) {
@@ -49,7 +95,11 @@ export function TaskManager() {
         return;
       }
     } else {
-      const { error } = await supabase.from("tasks").insert(newTask).single();
+      const { error } = await supabase.from("tasks").insert({
+        ...newTask,
+        email: session.user.email!,
+        image_url: imageUrl
+      }).single();
 
       if (error) {
         console.error(error);
@@ -57,9 +107,8 @@ export function TaskManager() {
       }
     }
 
-    setNewTask({ title: "", description: "" });
+    setNewTask({ title: "", description: "", email: "" });
     setEditingId(null);
-    fetchTasks();
   };
 
   const deleteTask = async (id: number) => {
@@ -69,20 +118,44 @@ export function TaskManager() {
       console.error(error);
       return;
     }
-
-    fetchTasks();
   };
 
   const editTask = (task: Task) => {
-    setNewTask({ title: task.title, description: task.description });
+    setNewTask({ title: task.title, description: task.description, email: task.email });
     setEditingId(task.id);
     formRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const logOut = async () => {
-    await supabase.auth.signOut();
-    window.location.reload();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        return;
+      }
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Unexpected error during sign out:', error);
+    }
   };
+
+  
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-channel')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks' },
+        (payload) => {
+          console.log('Real-time update:', payload);
+          fetchTasks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [])
 
   return (
     <div className="container" ref={formRef}>
@@ -117,6 +190,17 @@ export function TaskManager() {
                 setNewTask({ ...newTask, description: e.target.value })
               }
               className="textarea"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="image">Image</label>
+            <input
+              id="image"
+              type="file"
+              accept="image/*"
+              placeholder="Upload an image..."
+              className="image-input"
+              onChange={handleFileChange}
             />
           </div>
           <button className="btn btn-primary" type="submit">
